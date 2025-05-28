@@ -63,10 +63,8 @@ Listen 192.168.1.100:80
 httpd|stable ⇒ grep -ri "mod_status" httpd.conf
 httpd.conf:LoadModule status_module lib/httpd/modules/mod_status.so
 
-
 cd /opt/homebrew/etc/httpd/extra
 extra|stable ⇒ cat httpd-info.conf | grep -v '^#'
-
 
 <Location /server-status>
     SetHandler server-status
@@ -79,7 +77,9 @@ ExtendedStatus On
     SetHandler server-info
     Require all granted
 </Location>
+```
 
+```
 brew services restart httpd
 ```
 
@@ -117,16 +117,73 @@ logs:
     path: /opt/homebrew/var/log/httpd/error_log
     source: apache
     service: apache
-
 ```
 
-https://docs.datadoghq.com/agent/configuration/agent-configuration-files/#agent-configuration-directory
-https://docs.datadoghq.com/agent/configuration/agent-commands/#start-stop-and-restart-the-agent
-https://phoenixnap.com/kb/apache-access-log
-https://www.git-tower.com/blog/apache-on-macos 
-https://www.tecmint.com/monitor-apache-web-server-load-and-page-statistics/
-https://docs.datadoghq.com/tracing/trace_collection/proxy_setup/httpd/
-https://docs.datadoghq.com/containers/kubernetes/log/?tab=datadogoperator
+- [Datadog Agent Configuration Files](https://docs.datadoghq.com/agent/configuration/agent-configuration-files/#agent-configuration-directory)
+- [Datadog Agent Commands](https://docs.datadoghq.com/agent/configuration/agent-commands/#start-stop-and-restart-the-agent)
+- [Apache Access Log](https://phoenixnap.com/kb/apache-access-log)
+- [Apache on macOS](https://www.git-tower.com/blog/apache-on-macos)
+- [Monitor Apache Web Server Load and Statistics](https://www.tecmint.com/monitor-apache-web-server-load-and-page-statistics/)
+- [Apache HTTPD Proxy Setup](https://docs.datadoghq.com/tracing/trace_collection/proxy_setup/httpd/)
+- [Kubernetes Log Collection](https://docs.datadoghq.com/containers/kubernetes/log/?tab=datadogoperator)
+
+
+### RabbitMQ
+
+```
+brew update
+brew install rabbitmq
+...
+...
+...
+Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
+==> Caveats
+==> rabbitmq
+Management UI: http://localhost:15672
+Homebrew-specific docs: https://rabbitmq.com/install-homebrew.html
+
+To start rabbitmq now and restart at login:
+  brew services start rabbitmq
+Or, if you don't want/need a background service you can just run:
+  CONF_ENV_FILE="/opt/homebrew/etc/rabbitmq/rabbitmq-env.conf" /opt/homebrew/opt/rabbitmq/sbin/rabbitmq-server
+```
+
+```
+datadog-lab|main ⇒ brew services start rabbitmq
+==> Successfully started `rabbitmq` (label: homebrew.mxcl.rabbitmq)
+
+datadog-lab|main ⇒ /opt/homebrew/sbin/rabbitmqctl enable_feature_flag all
+Enabling all feature flags ...
+```
+
+```
+homebrew|stable ⇒ cat ./etc/rabbitmq/rabbitmq-env.conf
+CONFIG_FILE=/opt/homebrew/etc/rabbitmq/rabbitmq
+NODE_IP_ADDRESS=192.168.1.100
+NODENAME=rabbit@192.168.1.100             <= 
+RABBITMQ_LOG_BASE=/opt/homebrew/var/log/rabbitmq
+PLUGINS_DIR="/opt/homebrew/opt/rabbitmq/plugins:/opt/homebrew/share/rabbitmq/plugins"
+```
+
+=>
+```
+homebrew|stable ⇒ /opt/homebrew/sbin/rabbitmq-plugins enable rabbitmq_management
+%Protocol.UndefinedError{protocol: String.Chars, value: {:error, {:node_name, :short}}, description: ""}
+```
+
+```
+homebrew|stable ⇒ which rabbitmq-plugins
+/opt/homebrew/sbin/rabbitmq-plugins
+```
+
+* 
+On Apple Silicon Macs, RabbitMQ configuration file located at [/opt/homebrew/etc/rabbitmq/rabbitmq.conf] (https://www.rabbitmq.com/docs/install-homebrew#:~:text=On%20Apple%20Silicon%20Macs%2C%20RabbitMQ,new%20configuration%20file%20on%20boot.). The file does not exist by default and must be created by the user. 
+The node then must be restarted so that it picks up the new configuration file on boot.
+
+- [Install RabbitMQ homebrew](https://www.rabbitmq.com/docs/install-homebrew)
+- [Password console](https://www.rabbitmq.com/docs/passwords)
+- [Monitoring RabbitMQ performance with DataDog](https://www.datadoghq.com/blog/monitoring-rabbitmq-performance-with-datadog/)
+- [Setup RabbitMQ Datadog](https://docs.datadoghq.com/integrations/rabbitmq/?tab=host)
 
 ---
 
