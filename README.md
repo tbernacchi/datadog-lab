@@ -27,6 +27,107 @@ Before you start, make sure you have:
 4. Integrate Apache and RabbitMQ with Datadog.
 5. Present the standard Datadog dashboards for these middlewares.
 
+
+### Install datadog-agent
+```
+datadog-lab|main ⇒ DD_API_KEY=<KEY> DD_SITE="us5.datadoghq.com" bash -c "$(curl -L https://install.datadoghq.com/scripts/install_mac_os.sh)"
+```
+
+```
+datadog-lab|main ⇒ datadog-agent launch-gui
+GUI opened at localhost:5002
+
+http://localhost:5002/
+```
+
+```
+apache.d|⇒ launchctl list | grep -i datadog
+69323	0	com.datadoghq.gui
+69731	0	com.datadoghq.agent
+```
+
+```
+apache.d|⇒ launchctl stop com.datadoghq.agent
+apache.d|⇒ launchctl start com.datadoghq.agent
+```
+
+### Apache
+```
+brew install httpd
+```
+
+```
+httpd|stable ⇒ vim /opt/homebrew/etc/httpd/httpd.conf
+Listen 192.168.1.100:80
+
+httpd|stable ⇒ grep -ri "mod_status" httpd.conf
+httpd.conf:LoadModule status_module lib/httpd/modules/mod_status.so
+
+
+cd /opt/homebrew/etc/httpd/extra
+extra|stable ⇒ cat httpd-info.conf | grep -v '^#'
+
+
+<Location /server-status>
+    SetHandler server-status
+    Require all granted
+</Location>
+
+ExtendedStatus On
+
+<Location /server-info>
+    SetHandler server-info
+    Require all granted
+</Location>
+
+brew services restart httpd
+```
+
+### Datadog
+
+```
+datadog-agent|⇒ find .  |grep -i "apache"| head -n5
+./LICENSES/THIRD-PARTY-Apache-2.0
+./etc/conf.d/apache.d
+./etc/conf.d/apache.d/auto_conf.yaml
+./etc/conf.d/apache.d/conf.yaml
+./etc/conf.d/apache.d/.conf.yaml.example.bkp
+```
+
+```
+vim /opt/datadog-agent/etc/conf.d/apache.d/conf.yaml
+```
+
+```
+instances:
+
+    ## @param apache_status_url - string - required
+    ## Status url of your Apache server.
+    #
+  - apache_status_url: http://192.168.1.100/server-status?auto
+
+
+logs:
+  - type: file
+    path: /opt/homebrew/var/log/httpd/access_log
+    source: apache
+    service: apache
+
+  - type: file
+    path: /opt/homebrew/var/log/httpd/error_log
+    source: apache
+    service: apache
+
+```
+
+https://docs.datadoghq.com/agent/configuration/agent-configuration-files/#agent-configuration-directory
+https://docs.datadoghq.com/agent/configuration/agent-commands/#start-stop-and-restart-the-agent
+https://phoenixnap.com/kb/apache-access-log
+https://www.git-tower.com/blog/apache-on-macos 
+https://www.tecmint.com/monitor-apache-web-server-load-and-page-statistics/
+https://docs.datadoghq.com/tracing/trace_collection/proxy_setup/httpd/
+https://docs.datadoghq.com/containers/kubernetes/log/?tab=datadogoperator
+
 ---
 
 ## ☸️ Kubernetes Setup
