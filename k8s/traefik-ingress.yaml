@@ -1,0 +1,44 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-python-prefix
+  namespace: apm-apps
+spec:
+  stripPrefix:
+    prefixes:
+      - /python
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-java-prefix
+  namespace: apm-apps
+spec:
+  stripPrefix:
+    prefixes:
+      - /java
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: apm-apps-route
+  namespace: apm-apps
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`traefik.mykubernetes.com`) && PathPrefix(`/python`)
+      middlewares:
+        - name: strip-python-prefix
+      services:
+        - name: python-flask
+          port: 8082
+    - kind: Rule
+      match: Host(`traefik.mykubernetes.com`) && PathPrefix(`/java`)
+      middlewares:
+        - name: strip-java-prefix
+      services:
+        - name: java-spring
+          port: 8083
+  tls: {}
