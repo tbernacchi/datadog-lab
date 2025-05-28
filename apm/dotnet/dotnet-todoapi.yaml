@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dotnet-todoapi
+  namespace: apm-apps
 spec:
   selector:
     matchLabels:
@@ -13,10 +14,10 @@ spec:
     spec:
       containers:
       - name: dotnet-todoapi
-        image: dotnet-todoapi
-        imagePullPolicy: Never
+        image: ambrosiaaaaa/apm-dotnet:v0.0.1
+        imagePullPolicy: Always
         ports:
-        - containerPort: 80
+        - containerPort: 8081
         env: []
         resources:
           requests:
@@ -30,8 +31,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: dotnet-todoapi
+  namespace: apm-apps
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: dotnet-todoapi
   ports:
