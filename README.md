@@ -176,9 +176,7 @@ homebrew|stable ⇒ which rabbitmq-plugins
 /opt/homebrew/sbin/rabbitmq-plugins
 ```
 
-* 
-On Apple Silicon Macs, RabbitMQ configuration file located at [/opt/homebrew/etc/rabbitmq/rabbitmq.conf] (https://www.rabbitmq.com/docs/install-homebrew#:~:text=On%20Apple%20Silicon%20Macs%2C%20RabbitMQ,new%20configuration%20file%20on%20boot.). The file does not exist by default and must be created by the user. 
-The node then must be restarted so that it picks up the new configuration file on boot.
+* On Apple Silicon Macs, RabbitMQ configuration [file](https://www.rabbitmq.com/docs/install-homebrew#:~:text=On%20Apple%20Silicon%20Macs%2C%20RabbitMQ,new%20configuration%20file%20on%20boot) located at /opt/homebrew/etc/rabbitmq/rabbitmq.conf. The file does not exist by default and must be created by the user. The node then must be restarted so that it picks up the new configuration file on boot.
 
 - [Install RabbitMQ homebrew](https://www.rabbitmq.com/docs/install-homebrew)
 - [Password console](https://www.rabbitmq.com/docs/passwords)
