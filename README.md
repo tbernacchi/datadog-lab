@@ -213,6 +213,10 @@ Hang tight while we grab the latest from your chart repositories...
 ...Successfully got an update from
 ```
 
+```
+datadog-lab|main ⇒  helm install datadog-operator datadog/datadog-operator
+```
+
 https://docs.datadoghq.com/containers/kubernetes/
 https://docs.datadoghq.com/containers/kubernetes/installation/?tab=datadogoperator
 
