@@ -223,14 +223,14 @@ https://docs.datadoghq.com/containers/kubernetes/installation/?tab=datadogoperat
 - [apm-for-k8s-dd](https://medium.com/@dikshantmali.dev/datadog-apm-for-k8s-everything-you-need-to-know-1fefbbd358d2)
 - [tracing](https://www.datadoghq.com/blog/auto-instrument-kubernetes-tracing-with-datadog/)
 
-* python
+* python  
 https://github.com/DataDog/dd-trace-py/releases
 
-* java:
+* java  
 https://docs.datadoghq.com/tracing/guide/tutorial-enable-java-admission-controller/
 https://github.com/DataDog/dd-trace-java/releases
 
-* dotnet:
+* dotnet  
 https://dev.to/kiranrongali/integrate-datadog-with-a-net-application-1gac
 https://github.com/DataDog/dd-trace-dotnet/releases/
 
