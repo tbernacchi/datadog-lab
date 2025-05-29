@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: java-spring
   namespace: apm-apps
+  labels:
+    tags.datadoghq.com/env: "apm-apps"
+    tags.datadoghq.com/service: "java-spring"
+    tags.datadoghq.com/version: "v1.0.0"
 spec:
   selector:
     matchLabels:
@@ -11,6 +15,12 @@ spec:
     metadata:
       labels:
         app: java-spring
+        tags.datadoghq.com/env: "apm-apps"   # env
+        tags.datadoghq.com/service: "java-spring"
+        tags.datadoghq.com/version: "v1.0.0"
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/java-lib.version: "v1.49.0"
     spec:
       containers:
       - name: java-spring
@@ -18,7 +28,9 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
-        env: []
+        env: 
+          - name: DD_LOGS_INJECTION
+            value: "true"
         resources:
           requests:
             cpu: 200m

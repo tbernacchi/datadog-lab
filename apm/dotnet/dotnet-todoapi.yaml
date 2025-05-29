@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: dotnet-todoapi
   namespace: apm-apps
+  labels:
+    tags.datadoghq.com/env: "apm-apps"
+    tags.datadoghq.com/service: "dotnet-todoapi"
+    tags.datadoghq.com/version: "v1.0.0"
 spec:
   selector:
     matchLabels:
@@ -11,6 +15,12 @@ spec:
     metadata:
       labels:
         app: dotnet-todoapi
+        tags.datadoghq.com/env: "apm-apps"   # env
+        tags.datadoghq.com/service: "dotnet-todoapi"
+        tags.datadoghq.com/version: "v1.0.0"
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/dotnet-lib.version: "v3.17.0"
     spec:
       containers:
       - name: dotnet-todoapi
@@ -18,7 +28,9 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
-        env: []
+        env: 
+          - name: DD_LOGS_INJECTION
+            value: "true"
         resources:
           requests:
             cpu: 200m

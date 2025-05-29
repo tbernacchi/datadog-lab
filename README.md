@@ -190,12 +190,20 @@ homebrew|stable ⇒ which rabbitmq-plugins
 1. Build a **local Kubernetes cluster** with 3 nodes using Kind. [Optional]
 2. Integrate this Kubernetes cluster with your Datadog account, enabling the Datadog Cluster Agent.
 3. Deploy the following applications (Java, .NET, Python) from the directory `apm`:
-```apm
+```
+datadog-lab|main ⇒ tree -L 1 apm
+apm
 ├── dotnet
 ├── java
 └── python
+
+4 directories, 0 files
 ```
 4. Instrument these applications to collect and correlate metrics, logs and traces.
+
+
+
+
 
 ---
 

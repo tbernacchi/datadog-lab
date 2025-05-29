@@ -22,3 +22,7 @@ spec:
       hostPortConfig:
         enabled: true
         hostPort: 8126
+
+    admissionController:
+      enabled: true
+      mutateUnlabelled: true
