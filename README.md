@@ -201,9 +201,38 @@ apm
 ```
 4. Instrument these applications to collect and correlate metrics, logs and traces.
 
+```
+datadog-lab|main ⇒ helm repo add datadog https://helm.datadoghq.com
+"datadog" has been added to your repositories
 
+datadog-lab|main ⇒ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "traefik" chart repository
+...Successfully got an update from the "argo" chart repository
+...Successfully got an update from the "datadog" chart repository
+...Successfully got an update from
+```
 
+https://docs.datadoghq.com/containers/kubernetes/
+https://docs.datadoghq.com/containers/kubernetes/installation/?tab=datadogoperator
 
+## APM - trace
+
+- [datadog-operator](https://docs.datadoghq.com/containers/cluster_agent/admission_controller/?tab=datadogoperator)
+- [tracing-with-datadog](https://www.datadoghq.com/blog/auto-instrument-kubernetes-tracing-with-datadog/)
+- [apm-for-k8s-dd](https://medium.com/@dikshantmali.dev/datadog-apm-for-k8s-everything-you-need-to-know-1fefbbd358d2)
+- [tracing](https://www.datadoghq.com/blog/auto-instrument-kubernetes-tracing-with-datadog/)
+
+* python
+https://github.com/DataDog/dd-trace-py/releases
+
+* java:
+https://docs.datadoghq.com/tracing/guide/tutorial-enable-java-admission-controller/
+https://github.com/DataDog/dd-trace-java/releases
+
+* dotnet:
+https://dev.to/kiranrongali/integrate-datadog-with-a-net-application-1gac
+https://github.com/DataDog/dd-trace-dotnet/releases/
 
 ---
 
