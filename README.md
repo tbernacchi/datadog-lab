@@ -259,7 +259,3 @@ Include:
 - Currently errors with greater occurence;
 
 ---
-
-## 🎯 Goal
-
-Enable full observability and monitoring for middleware and Kubernetes applications, improving detection and response to operational issues using Datadog.
