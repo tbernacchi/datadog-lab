@@ -1,0 +1,6 @@
+---
+install_method:
+  tool: install_script_mac
+  tool_version: install_script_mac
+  installer_version: install_script_mac-1.4.0
+

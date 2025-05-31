@@ -18,7 +18,7 @@ Before you start, make sure you have:
 
 ## 🖥️ Host Setup
 
-1. **Install Datadog Agent** on your desktop or any machine.
+1. **Install Datadog Agent** on your desktop or any machine. (In this step I'm using my own machine. MacOS)
 2. Configure the Datadog Agent to collect:
    - APM (Application Performance Monitoring)
    - Logs

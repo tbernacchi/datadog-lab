@@ -1,0 +1,5 @@
+api_key: <KEY>
+site: us5.datadoghq.com
+logs:
+  enabled: true
+logs_enabled: true

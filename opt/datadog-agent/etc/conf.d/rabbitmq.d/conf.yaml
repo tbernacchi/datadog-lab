@@ -1,0 +1,23 @@
+init_config:
+
+instances:
+  - rabbitmq_api_url: http://192.168.1.100:15672/api/
+    rabbitmq_user: guest
+    rabbitmq_pass: guest
+
+  - rabbitmq_api_url: http://192.168.1.100:15692/metrics
+    rabbitmq_user: guest
+    rabbitmq_pass: guest
+    prometheus_plugin:
+      url: http://192.168.1.100:15692
+
+logs:
+  - type: file
+    path: /opt/homebrew/var/log/rabbitmq/*.log
+    source: rabbitmq 
+    service: rabbitmq
+    log_processing_rules:
+    - type: multi_line
+      name: logs_starts_with_equal_sign
+      pattern: '='
+
