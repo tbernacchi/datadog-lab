@@ -34,15 +34,17 @@ jobs:
       - name: Read version from file
         id: version
         run: |
-          VERSION=$(cat apm/python/.version)
+          VERSION=$(cat .version)
           echo "Read version: $VERSION" # Debug
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT # Debug of the output file
 
       - name: Super Debug
         run: |
+          pwd
+          ls -la
           echo "Conteúdo do arquivo VERSION:"
-          cat apm/python/.version
+          cat .version
           echo "----------------"
           echo "Output do step anterior:"
           echo "${{ steps.version.outputs.VERSION }}"
