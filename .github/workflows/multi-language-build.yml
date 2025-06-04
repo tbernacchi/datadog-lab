@@ -87,9 +87,6 @@ jobs:
         with:
           driver: remote
           endpoint: unix:///run/k3s/containerd/containerd.sock
-          driver-opts: |
-            image=moby/buildkit:latest
-            network=host
 
       - name: Build and push Python image
         uses: docker/build-push-action@v5
@@ -97,7 +94,6 @@ jobs:
           context: ./apm/python
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
-          builder: default
 
   # # Build e teste para Java
   # java-build:
