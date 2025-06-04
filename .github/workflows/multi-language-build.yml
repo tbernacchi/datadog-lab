@@ -1,0 +1,168 @@
+name: Multi-Language Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apm/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apm/**'
+
+env:
+  REGISTRY_USER: ambrosiaaaaa
+  REGISTRY: docker.io
+
+# Configuração de concorrência para evitar builds simultâneos do mesmo código
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Build e teste para Python
+  python-build:
+    if: contains(github.event.head_commit.modified, 'apm/python') || github.event_name == 'pull_request'
+    runs-on: my-runner-datadog-lab
+    
+    env:
+      IMAGE_NAME: apm-python
+
+    defaults:
+      run:
+        working-directory: apm/python
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Read version from file
+        id: version
+        run: |
+          VERSION=$(cat apm/python/.version)
+          echo "Read version: $VERSION" # Debug
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT # Debug of the output file
+
+      - name: Super Debug
+        run: |
+          echo "Conteúdo do arquivo VERSION:"
+          cat apm/python/.version
+          echo "----------------"
+          echo "Output do step anterior:"
+          echo "${{ steps.version.outputs.VERSION }}"
+          echo "----------------"
+          echo "Tag completa que será usada:"
+          echo "${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}"
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run tests
+        run: python -m pytest
+      
+      - name: Build Python
+        run: python setup.py build
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Python image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apm/python
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
+
+  # # Build e teste para Java
+  # java-build:
+  #   if: contains(github.event.head_commit.modified, 'apm/java') || github.event_name == 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: apm/java
+  #   steps:
+  #     - uses: actions/checkout@v3
+      
+  #     - name: Set up JDK
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         java-version: '17'
+  #         distribution: 'temurin'
+  #         cache: 'maven'
+      
+  #     - name: Build with Maven
+  #       run: mvn -B package --file pom.xml
+      
+  #     - name: Run tests
+  #       run: mvn test
+
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Build and push Java image
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: apm/java
+  #         push: true
+  #         tags: ambrosiaaaaa/apm-java:latest
+
+  # # Build and test for .NET
+  # dotnet-build:
+  #   if: contains(github.event.head_commit.modified, 'apm/dotnet') || github.event_name == 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: apm/dotnet
+  #   steps:
+  #     - uses: actions/checkout@v3
+      
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v3
+  #       with:
+  #         dotnet-version: '6.0.x'
+      
+  #     - name: Restore dependencies
+  #       run: dotnet restore
+      
+  #     - name: Build
+  #       run: dotnet build --configuration Release --no-restore
+      
+  #     - name: Test
+  #       run: dotnet test --no-restore --verbosity normal
+
+  #     - name: Login to Docker Hub
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  #     - name: Build and push .NET image
+  #       uses: docker/build-push-action@v4
+  #       with:
+  #         context: apm/dotnet
+  #         push: true
+  #         tags: ambrosiaaaaa/apm-dotnet:latest
+
+  # Job that runs after all builds have succeeded
+  notify-success:
+    #needs: [python-build, java-build, dotnet-build]
+    needs: [python-build]
+    runs-on: my-runner-datadog-lab
+    steps:
+      - name: Notify success
+        run: echo "All builds completed successfully and images pushed to Docker Hub!" 
