@@ -3,12 +3,8 @@ name: Multi-Language Build
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'apm/**'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'apm/**'
 
 env:
   REGISTRY_USER: ambrosiaaaaa
@@ -22,7 +18,7 @@ concurrency:
 jobs:
   # Build e teste para Python
   python-build:
-    if: contains(github.event.head_commit.modified, 'apm/python') || github.event_name == 'pull_request'
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: my-runner-datadog-lab
     
     env:
@@ -160,7 +156,7 @@ jobs:
 
   # Job that runs after all builds have succeeded
   notify-success:
-    #needs: [python-build, java-build, dotnet-build]
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
     needs: [python-build]
     runs-on: my-runner-datadog-lab
     steps:
