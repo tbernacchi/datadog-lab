@@ -82,9 +82,14 @@ jobs:
           username: ${{ env.REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push with ctr
+      - name: Install buildah
         run: |
-          # Build using buildah (which should be available on the system)
+          sudo apt-get update
+          sudo apt-get install -y buildah
+
+      - name: Build and push with buildah
+        run: |
+          # Build using buildah
           sudo buildah bud -t ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} ./apm/python
           
           # Push using buildah
