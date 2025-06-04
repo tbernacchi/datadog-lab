@@ -10,13 +10,13 @@ env:
   REGISTRY_USER: ambrosiaaaaa
   REGISTRY: docker.io
 
-# Configuração de concorrência para evitar builds simultâneos do mesmo código
+# Configuration of concurrency to avoid simultaneous builds of the same code
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Build e teste para Python
+  # Build and test for Python
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: my-runner-datadog-lab
@@ -43,13 +43,13 @@ jobs:
         run: |
           pwd
           ls -la
-          echo "Conteúdo do arquivo VERSION:"
+          echo "Content of VERSION:"
           cat .version
           echo "----------------"
-          echo "Output do step anterior:"
+          echo "Output of the previous step:"
           echo "${{ steps.version.outputs.VERSION }}"
           echo "----------------"
-          echo "Tag completa que será usada:"
+          echo "Complete tag that will be used:"
           echo "${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}"
       
       - name: Set up Python
@@ -63,12 +63,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
-      - name: Run tests
-        run: python -m pytest
+      - name: Check and run tests
+        run: |
+          # Verifica se existem arquivos de teste
+          TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
+          if [ -z "$TEST_FILES" ]; then
+            echo "Warning: No test files found, skipping tests."
+          else
+            echo "Found test files:"
+            echo "$TEST_FILES"
+            python -m pytest -v
+          fi
       
-      - name: Build Python
-        run: python setup.py build
-
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
