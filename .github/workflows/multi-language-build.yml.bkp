@@ -1,0 +1,64 @@
+###This pipeline runs on ubuntu-lates on GitHub and uses Buildah.
+
+name: Build and push python image
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY_USER: ambrosiaaaaa
+  REGISTRY: docker.io
+  IMAGE_NAME: apm-python
+
+jobs:
+  python-build:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apm/python
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies and tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y buildah python3 python3-pip
+          python3 -m pip install --upgrade pip
+
+      - name: Read version from file
+        id: version
+        run: |
+          VERSION=$(cat .version)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install -r requirements.txt
+
+      - name: Run tests if exist
+        run: |
+          TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
+          if [ -z "$TEST_FILES" ]; then
+            echo "Warning: No test files found, skipping tests."
+          else
+            echo "Found test files:"
+            echo "$TEST_FILES"
+            python3 -m pytest -v
+          fi
+
+      - name: Login to Docker Hub with Buildah
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u $REGISTRY_USER --password-stdin $REGISTRY
+
+      - name: Build and push image with Buildah
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
+          buildah bud -t $IMAGE .
+          buildah push $IMAGE
