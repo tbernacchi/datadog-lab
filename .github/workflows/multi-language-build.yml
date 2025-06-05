@@ -10,13 +10,11 @@ env:
   REGISTRY_USER: ambrosiaaaaa
   REGISTRY: docker.io
 
-# Configuration of concurrency to avoid simultaneous builds of the same code
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Build and test for Python
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: my-runner-datadog-lab
@@ -33,6 +31,7 @@ jobs:
     defaults:
       run:
         working-directory: apm/python
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -54,7 +53,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
-      
+
       - name: Check and run tests
         run: |
           TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
@@ -68,88 +67,8 @@ jobs:
 
       - name: Build and push with buildah
         run: |
-          buildah bud -t ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} .
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u ${{ env.REGISTRY_USER }} --password-stdin ${{ env.REGISTRY }}
-          buildah push ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
-
-  # # Build e teste para Java
-  # java-build:
-  #   if: contains(github.event.head_commit.modified, 'apm/java') || github.event_name == 'pull_request'
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: apm/java
-  #   steps:
-  #     - uses: actions/checkout@v3
-      
-  #     - name: Set up JDK
-  #       uses: actions/setup-java@v3
-  #       with:
-  #         java-version: '17'
-  #         distribution: 'temurin'
-  #         cache: 'maven'
-      
-  #     - name: Build with Maven
-  #       run: mvn -B package --file pom.xml
-      
-  #     - name: Run tests
-  #       run: mvn test
-
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v2
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-  #     - name: Build and push Java image
-  #       uses: docker/build-push-action@v4
-  #       with:
-  #         context: apm/java
-  #         push: true
-  #         tags: ambrosiaaaaa/apm-java:latest
-
-  # # Build and test for .NET
-  # dotnet-build:
-  #   if: contains(github.event.head_commit.modified, 'apm/dotnet') || github.event_name == 'pull_request'
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: apm/dotnet
-  #   steps:
-  #     - uses: actions/checkout@v3
-      
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v3
-  #       with:
-  #         dotnet-version: '6.0.x'
-      
-  #     - name: Restore dependencies
-  #       run: dotnet restore
-      
-  #     - name: Build
-  #       run: dotnet build --configuration Release --no-restore
-      
-  #     - name: Test
-  #       run: dotnet test --no-restore --verbosity normal
-
-  #     - name: Login to Docker Hub
-  #       uses: docker/login-action@v2
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-  #     - name: Build and push .NET image
-  #       uses: docker/build-push-action@v4
-  #       with:
-  #         context: apm/dotnet
-  #         push: true
-  #         tags: ambrosiaaaaa/apm-dotnet:latest
-
-  # Job that runs after all builds have succeeded
-  notify-success:
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
-    needs: [python-build]
-    runs-on: my-runner-datadog-lab
-    steps:
-      - name: Notify success
-        run: echo "All builds completed successfully and images pushed to Docker Hub!" 
+          VERSION=${{ steps.version.outputs.VERSION }}
+          IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
+          buildah bud -t $IMAGE .
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u "$REGISTRY_USER" --password-stdin "$REGISTRY"
+          buildah push $IMAGE
