@@ -1,4 +1,4 @@
-name: Build and push python image - kaniko
+name: Build and push python image - DinD
 
 on:
   push:
@@ -14,15 +14,31 @@ env:
 jobs:
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
-    runs-on: [my-runner-datadog-lab] # My runner on Kubernetes.
+    runs-on: [my-runner-datadog-lab] # teu runner no k8s
 
     defaults:
       run:
         working-directory: apm/python
 
+    services:
+      docker:
+        image: docker:24.0.2-dind
+        privileged: true
+        options: --network host
+        ports:
+          - 2375:2375
+        env:
+          DOCKER_TLS_CERTDIR: ""
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Setup Docker client
+        run: |
+          apk add --no-cache docker-cli
+          export DOCKER_HOST=tcp://localhost:2375
+          docker version
 
       - name: Read version from file
         id: version
@@ -32,6 +48,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          apk add --no-cache python3 py3-pip
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
@@ -46,30 +63,15 @@ jobs:
             python3 -m pytest -v
           fi
 
-      - name: Login to DockerHub for Kaniko
+      - name: Login to Docker Hub
         run: |
-          mkdir -p /kaniko/.docker
-          cat <<EOF > /kaniko/.docker/config.json
-          {
-            "auths": {
-              "${{ env.REGISTRY }}": {
-                "username": "${{ env.REGISTRY_USER }}",
-                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
-              }
-            }
-          }
-          EOF
+          export DOCKER_HOST=tcp://localhost:2375
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u $REGISTRY_USER --password-stdin $REGISTRY
 
-      - name: Build and push image with Kaniko
-        uses: addnab/docker-run-action@v3
-        with:
-          image: gcr.io/kaniko-project/executor:latest
-          options: >
-            -v ${{ github.workspace }}:/workspace
-            -v /kaniko/.docker:/kaniko/.docker
-          run: |
-            /kaniko/executor \
-              --dockerfile=apm/python/Dockerfile \
-              --context=dir:///workspace/apm/python \
-              --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} \
-              --skip-tls-verify
+      - name: Build and push image with Docker
+        run: |
+          export DOCKER_HOST=tcp://localhost:2375
+          VERSION=${{ steps.version.outputs.VERSION }}
+          IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
+          docker build -t $IMAGE .
+          docker push $IMAGE
