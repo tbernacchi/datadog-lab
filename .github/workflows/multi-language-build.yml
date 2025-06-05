@@ -1,4 +1,6 @@
-name: Build and push python image - kaniko
+###This pipeline runs on ubuntu-latest and uses Docker official actions.
+
+name: Multi-language Build
 
 on:
   push:
@@ -6,15 +8,24 @@ on:
   pull_request:
     branches: [ main ]
 
+# Configuração de concorrência para evitar builds duplicados
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY_USER: ambrosiaaaaa
   REGISTRY: docker.io
-  IMAGE_NAME: apm-python
 
 jobs:
   python-build:
+    name: Build Python App
     if: contains(github.event.head_commit.message, '[skip ci]') == false
-    runs-on: my-runner-datadog-lab
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apm/python
 
     steps:
       - name: Checkout repository
@@ -23,17 +34,15 @@ jobs:
       - name: Read version from file
         id: version
         run: |
-          VERSION=$(cat apm/python/.version)
+          VERSION=$(cat .version)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Install Python dependencies
-        working-directory: apm/python
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
       - name: Run tests if exist
-        working-directory: apm/python
         run: |
           TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
           if [ -z "$TEST_FILES" ]; then
@@ -44,12 +53,118 @@ jobs:
             python3 -m pytest -v
           fi
 
-      - name: Build and push with Kaniko
-        uses: aevea/action-kaniko@master
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
-          image: ${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}
           username: ${{ env.REGISTRY_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          path: ./apm/python
-          tag: ${{ steps.version.outputs.VERSION }}
-          registry: ${{ env.REGISTRY }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apm/python
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/apm-python:${{ steps.version.outputs.VERSION }}
+
+  java-build:
+    name: Build Java App
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apm/java
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Read version from file
+        id: version
+        run: |
+          VERSION=$(cat .version)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apm/java
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/apm-java:${{ steps.version.outputs.VERSION }}
+
+  dotnet-build:
+    name: Build .NET App
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apm/dotnet
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Read version from file
+        id: version
+        run: |
+          VERSION=$(cat .version)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apm/dotnet
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/apm-dotnet:${{ steps.version.outputs.VERSION }}
+
+  notify-success:
+    name: Notify Build Status
+    needs: [python-build, java-build, dotnet-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify success
+        run: |
+          echo "🎉 All builds completed successfully!"
+          echo "✅ Python App: Built and pushed"
+          echo "✅ Java App: Built and pushed"
+          echo "✅ .NET App: Built and pushed"
