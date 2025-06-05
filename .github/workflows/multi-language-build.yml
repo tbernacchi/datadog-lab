@@ -1,4 +1,4 @@
-name: Multi-Language Build
+name: Build and push python image
 
 on:
   push:
