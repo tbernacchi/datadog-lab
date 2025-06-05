@@ -14,25 +14,23 @@ env:
 jobs:
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
-    runs-on: [my-runner-datadog-lab] # teu runner no k8s
+    runs-on: [my-runner-datadog-lab] # teu runner K8s
 
     defaults:
       run:
         working-directory: apm/python
 
-    services:
-      docker:
-        image: docker:24.0.2-dind
-        privileged: true
-        options: --network host
-        ports:
-          - 2375:2375
-        env:
-          DOCKER_TLS_CERTDIR: ""
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Start DinD container
+        run: |
+          docker run -d --privileged --name dind \
+            -p 2375:2375 \
+            -e DOCKER_TLS_CERTDIR="" \
+            docker:24.0.2-dind
+          sleep 10  # aguarda DinD subir
 
       - name: Setup Docker client
         run: |
@@ -75,3 +73,8 @@ jobs:
           IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
           docker build -t $IMAGE .
           docker push $IMAGE
+
+      - name: Stop DinD
+        run: |
+          docker stop dind
+          docker rm dind
