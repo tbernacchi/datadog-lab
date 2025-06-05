@@ -56,7 +56,7 @@ jobs:
       - name: Login to DockerHub for Kaniko
         run: |
           sudo mkdir -p /kaniko/.docker
-          sudo cat <<EOF > /kaniko/.docker/config.json
+          cat <<EOF | sudo tee /kaniko/.docker/config.json
           {
             "auths": {
               "${{ env.REGISTRY }}": {
