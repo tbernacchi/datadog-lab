@@ -1,4 +1,4 @@
-name: Multi-Language Build
+name: Build and push python image
 
 on:
   push:
@@ -9,85 +9,54 @@ on:
 env:
   REGISTRY_USER: ambrosiaaaaa
   REGISTRY: docker.io
-
-# Configuration of concurrency to avoid simultaneous builds of the same code
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  IMAGE_NAME: apm-python
 
 jobs:
-  # Build and test for Python
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
-    runs-on: my-runner-datadog-lab
-    container:
-      image: quay.io/buildah/stable:latest
-      options: --privileged
-    
-    env:
-      IMAGE_NAME: apm-python
+    runs-on: ubuntu-latest
 
     defaults:
       run:
         working-directory: apm/python
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Install dependencies and tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y buildah python3 python3-pip
+          python3 -m pip install --upgrade pip
 
       - name: Read version from file
         id: version
         run: |
           VERSION=$(cat .version)
-          echo "Read version: $VERSION" # Debug
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          cat $GITHUB_OUTPUT # Debug of the output file
 
-      - name: Super Debug
+      - name: Install Python dependencies
         run: |
-          pwd
-          ls -la
-          echo "Content of VERSION:"
-          cat .version
-          echo "----------------"
-          echo "Output of the previous step:"
-          echo "${{ steps.version.outputs.VERSION }}"
-          echo "----------------"
-          echo "Complete tag that will be used:"
-          echo "${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}"
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-          cache: 'pip'
-      
-      - name: Install dependencies
+          python3 -m pip install -r requirements.txt
+
+      - name: Run tests if exist
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      - name: Check and run tests
-        run: |
-          # Verifica se existem arquivos de teste
           TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
           if [ -z "$TEST_FILES" ]; then
             echo "Warning: No test files found, skipping tests."
           else
             echo "Found test files:"
             echo "$TEST_FILES"
-            python -m pytest -v
+            python3 -m pytest -v
           fi
 
-      - name: Build and push with buildah
+      - name: Login to Docker Hub with Buildah
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u $REGISTRY_USER --password-stdin $REGISTRY
+
+      - name: Build and push image with Buildah
         run: |
-          # Debug current directory
-          echo "Current directory:"
-          pwd
-          ls -la
-          
-          # Build using buildah (using . since we're already in the correct directory)
-          buildah bud -t ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} .
-          
-          # Login and push using buildah
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u ${{ env.REGISTRY_USER }} --password-stdin ${{ env.REGISTRY }}
-          buildah push ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
+          VERSION=${{ steps.version.outputs.VERSION }}
+          IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
+          buildah bud -t $IMAGE .
+          buildah push $IMAGE
