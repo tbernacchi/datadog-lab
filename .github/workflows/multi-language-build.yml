@@ -1,4 +1,4 @@
-name: Build and push python image
+name: Build and push python image - kaniko
 
 on:
   push:
@@ -14,8 +14,7 @@ env:
 jobs:
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
-    #runs-on: ubuntu-latest #Github Actions machine.
-    runs-on: [my-runner-datadog-lab] #my runner on kubernetes.
+    runs-on: [my-runner-datadog-lab] # My runner on Kubernetes.
 
     defaults:
       run:
@@ -25,12 +24,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies and tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y buildah python3 python3-pip
-          python3 -m pip install --upgrade pip
-
       - name: Read version from file
         id: version
         run: |
@@ -39,6 +32,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
       - name: Run tests if exist
@@ -52,12 +46,30 @@ jobs:
             python3 -m pytest -v
           fi
 
-      - name: Login to Docker Hub with Buildah
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u $REGISTRY_USER --password-stdin $REGISTRY
-
-      - name: Build and push image with Buildah
+      - name: Login to DockerHub for Kaniko
         run: |
-          VERSION=${{ steps.version.outputs.VERSION }}
-          IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
-          buildah bud -t $IMAGE .
-          buildah push $IMAGE
+          mkdir -p /kaniko/.docker
+          cat <<EOF > /kaniko/.docker/config.json
+          {
+            "auths": {
+              "${{ env.REGISTRY }}": {
+                "username": "${{ env.REGISTRY_USER }}",
+                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
+              }
+            }
+          }
+          EOF
+
+      - name: Build and push image with Kaniko
+        uses: addnab/docker-run-action@v3
+        with:
+          image: gcr.io/kaniko-project/executor:latest
+          options: >
+            -v ${{ github.workspace }}:/workspace
+            -v /kaniko/.docker:/kaniko/.docker
+          run: |
+            /kaniko/executor \
+              --dockerfile=apm/python/Dockerfile \
+              --context=dir:///workspace/apm/python \
+              --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} \
+              --skip-tls-verify
