@@ -15,11 +15,6 @@ jobs:
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: ubuntu-latest
-    container:
-      image: gcr.io/kaniko-project/executor:v1.20.0-debug
-      env:
-        DOCKER_CLI_EXPERIMENTAL: enabled
-        DOCKER_BUILDKIT: 0
 
     defaults:
       run:
@@ -28,6 +23,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Setup Kaniko
+        run: |
+          mkdir -p /kaniko
+          curl -Lo /kaniko/executor https://storage.googleapis.com/kaniko-releases/v1.20.0/executor-linux-arm64
+          chmod +x /kaniko/executor
+        working-directory: /
 
       - name: Read version from file
         id: version
@@ -64,10 +66,11 @@ jobs:
             }
           }
           EOF
+        working-directory: /
 
       - name: Build and push with Kaniko
         run: |
-          /kaniko/executor \
+          sudo /kaniko/executor \
             --dockerfile=Dockerfile \
             --context=dir://$(pwd) \
             --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} \
