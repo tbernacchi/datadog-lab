@@ -14,7 +14,7 @@ env:
 jobs:
   python-build:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
-    runs-on: ubuntu-latest
+    runs-on: my-runner-datadog-lab
 
     steps:
       - name: Checkout repository
