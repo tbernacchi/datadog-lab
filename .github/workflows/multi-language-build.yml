@@ -23,13 +23,12 @@ jobs:
     container:
       image: quay.io/buildah/stable:latest
       options: --privileged
-      env:
-        ACTIONS_RUNNER_DEBUG: true
-        DOCKER_SKIP_VERSION_CHECK: true
-        DOCKER_DAEMON_SOCKET: ""
     
     env:
       IMAGE_NAME: apm-python
+      RUNNER_TOOL_CACHE: "/tmp/runner"
+      ACTIONS_CACHE_URL: ""
+      ACTIONS_RUNTIME_URL: ""
 
     defaults:
       run:
@@ -37,6 +36,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: Install Python
         run: |
@@ -47,23 +48,8 @@ jobs:
         id: version
         run: |
           VERSION=$(cat .version)
-          echo "Read version: $VERSION" # Debug
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          cat $GITHUB_OUTPUT # Debug of the output file
 
-      - name: Super Debug
-        run: |
-          pwd
-          ls -la
-          echo "Content of VERSION:"
-          cat .version
-          echo "----------------"
-          echo "Output of the previous step:"
-          echo "${{ steps.version.outputs.VERSION }}"
-          echo "----------------"
-          echo "Complete tag that will be used:"
-          echo "${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}"
-      
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
@@ -71,27 +57,18 @@ jobs:
       
       - name: Check and run tests
         run: |
-          # Verifica se existem arquivos de teste
           TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
           if [ -z "$TEST_FILES" ]; then
             echo "Warning: No test files found, skipping tests."
           else
             echo "Found test files:"
             echo "$TEST_FILES"
-            python -m pytest -v
+            python3 -m pytest -v
           fi
 
       - name: Build and push with buildah
         run: |
-          # Debug current directory
-          echo "Current directory:"
-          pwd
-          ls -la
-          
-          # Build using buildah (using . since we're already in the correct directory)
           buildah bud -t ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} .
-          
-          # Login and push using buildah
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | buildah login -u ${{ env.REGISTRY_USER }} --password-stdin ${{ env.REGISTRY }}
           buildah push ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
 
