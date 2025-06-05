@@ -70,8 +70,4 @@ jobs:
 
       - name: Build and push with Kaniko
         run: |
-          sudo /kaniko/executor \
-            --dockerfile=Dockerfile \
-            --context=dir://$(pwd) \
-            --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} \
-            --skip-tls-verify
+          sudo /kaniko/executor --dockerfile=Dockerfile --context=dir://$(pwd) --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} --skip-tls-verify
