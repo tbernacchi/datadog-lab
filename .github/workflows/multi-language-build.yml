@@ -23,6 +23,10 @@ jobs:
     container:
       image: quay.io/buildah/stable:latest
       options: --privileged
+      env:
+        ACTIONS_RUNNER_DEBUG: true
+        DOCKER_SKIP_VERSION_CHECK: true
+        DOCKER_DAEMON_SOCKET: ""
     
     env:
       IMAGE_NAME: apm-python
@@ -33,6 +37,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Install Python
+        run: |
+          microdnf install -y python3 python3-pip
+          python3 -m pip install --upgrade pip
 
       - name: Read version from file
         id: version
@@ -55,16 +64,10 @@ jobs:
           echo "Complete tag that will be used:"
           echo "${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}"
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-          cache: 'pip'
-      
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
       
       - name: Check and run tests
         run: |
