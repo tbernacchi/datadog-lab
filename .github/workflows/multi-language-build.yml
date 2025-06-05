@@ -1,80 +1,46 @@
-name: Build and push python image - DinD
+name: Build and push python image - kaniko
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    paths:
+      - "apm/python/**"
+      - ".github/workflows/build-with-kaniko.yml"
+
+  workflow_dispatch:
 
 env:
   REGISTRY_USER: ambrosiaaaaa
   REGISTRY: docker.io
   IMAGE_NAME: apm-python
+  KANIKO_CACHE_ARGS: "--cache=true --cache-ttl=24h"
 
 jobs:
-  python-build:
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
-    runs-on: [my-runner-datadog-lab] # teu runner K8s
+  build-and-push:
+    runs-on: my-runner-datadog-lab # my self-hosted runner
+    container:
+      image: gcr.io/kaniko-project/executor:latest
 
-    defaults:
-      run:
-        working-directory: apm/python
+    permissions:
+      contents: read
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Start DinD container
+      - name: Build and Push Image to Docker Hub with Kaniko
         run: |
-          docker run -d --privileged --name dind \
-            -p 2375:2375 \
-            -e DOCKER_TLS_CERTDIR="" \
-            docker:24.0.2-dind
-          sleep 10  # aguarda DinD subir
+          mkdir -p /kaniko/.docker
+          cat <<EOF > /kaniko/.docker/config.json
+          {
+            "auths": {
+              "https://index.docker.io/v1/": {
+                "auth": "$(echo -n "${{ env.REGISTRY_USER }}:${{ secrets.DOCKERHUB_TOKEN }}" | base64 -w0)"
+              }
+            }
+          }
+          EOF
 
-      - name: Setup Docker client
-        run: |
-          apk add --no-cache docker-cli
-          export DOCKER_HOST=tcp://localhost:2375
-          docker version
-
-      - name: Read version from file
-        id: version
-        run: |
-          VERSION=$(cat .version)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Install Python dependencies
-        run: |
-          apk add --no-cache python3 py3-pip
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt
-
-      - name: Run tests if exist
-        run: |
-          TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
-          if [ -z "$TEST_FILES" ]; then
-            echo "Warning: No test files found, skipping tests."
-          else
-            echo "Found test files:"
-            echo "$TEST_FILES"
-            python3 -m pytest -v
-          fi
-
-      - name: Login to Docker Hub
-        run: |
-          export DOCKER_HOST=tcp://localhost:2375
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u $REGISTRY_USER --password-stdin $REGISTRY
-
-      - name: Build and push image with Docker
-        run: |
-          export DOCKER_HOST=tcp://localhost:2375
-          VERSION=${{ steps.version.outputs.VERSION }}
-          IMAGE=$REGISTRY/$REGISTRY_USER/$IMAGE_NAME:$VERSION
-          docker build -t $IMAGE .
-          docker push $IMAGE
-
-      - name: Stop DinD
-        run: |
-          docker stop dind
-          docker rm dind
+          /kaniko/executor \
+            --dockerfile=apm/python/Dockerfile \
+            --context=dir://./apm/python \
+            --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:$(echo $GITHUB_SHA | head -c 7) \
+            ${{ env.KANIKO_CACHE_ARGS }} \
+            --push-retry 5
