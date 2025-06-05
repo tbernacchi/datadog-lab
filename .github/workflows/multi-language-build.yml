@@ -26,9 +26,9 @@ jobs:
 
       - name: Setup Kaniko
         run: |
-          mkdir -p /kaniko
-          curl -Lo /kaniko/executor https://storage.googleapis.com/kaniko-releases/v1.20.0/executor-linux-arm64
-          chmod +x /kaniko/executor
+          sudo mkdir -p /kaniko
+          sudo curl -Lo /kaniko/executor https://storage.googleapis.com/kaniko-releases/v1.20.0/executor-linux-arm64
+          sudo chmod +x /kaniko/executor
         working-directory: /
 
       - name: Read version from file
@@ -55,8 +55,8 @@ jobs:
 
       - name: Login to DockerHub for Kaniko
         run: |
-          mkdir -p /kaniko/.docker
-          cat <<EOF > /kaniko/.docker/config.json
+          sudo mkdir -p /kaniko/.docker
+          sudo cat <<EOF > /kaniko/.docker/config.json
           {
             "auths": {
               "${{ env.REGISTRY }}": {
