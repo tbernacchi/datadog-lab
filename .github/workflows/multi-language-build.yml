@@ -16,33 +16,24 @@ jobs:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: apm/python
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Kaniko
-        run: |
-          sudo mkdir -p /kaniko
-          sudo curl -Lo /kaniko/executor https://storage.googleapis.com/kaniko-releases/v1.20.0/executor-linux-arm64
-          sudo chmod +x /kaniko/executor
-        working-directory: /
-
       - name: Read version from file
         id: version
         run: |
-          VERSION=$(cat .version)
+          VERSION=$(cat apm/python/.version)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Install Python dependencies
+        working-directory: apm/python
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
       - name: Run tests if exist
+        working-directory: apm/python
         run: |
           TEST_FILES=$(find . -name "test_*.py" -o -name "*_test.py")
           if [ -z "$TEST_FILES" ]; then
@@ -53,21 +44,12 @@ jobs:
             python3 -m pytest -v
           fi
 
-      - name: Login to DockerHub for Kaniko
-        run: |
-          sudo mkdir -p /kaniko/.docker
-          cat <<EOF | sudo tee /kaniko/.docker/config.json
-          {
-            "auths": {
-              "${{ env.REGISTRY }}": {
-                "username": "${{ env.REGISTRY_USER }}",
-                "password": "${{ secrets.DOCKERHUB_TOKEN }}"
-              }
-            }
-          }
-          EOF
-        working-directory: /
-
       - name: Build and push with Kaniko
-        run: |
-          sudo /kaniko/executor --dockerfile=Dockerfile --context=dir://$(pwd) --destination=${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }} --skip-tls-verify
+        uses: aevea/action-kaniko@master
+        with:
+          image: ${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          path: ./apm/python
+          tag: ${{ steps.version.outputs.VERSION }}
+          registry: ${{ env.REGISTRY }}
