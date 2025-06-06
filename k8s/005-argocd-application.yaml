@@ -9,7 +9,7 @@ metadata:
     argocd-image-updater.argoproj.io/update-strategy: "semver"
     argocd-image-updater.argoproj.io/pull-secret: "dockerhub-secret"
     argocd-image-updater.argoproj.io/write-back-method: "git:secret:apm-apps/git-creds"
-    argocd-image-updater.argoproj.io/write-back-target: "kustomization"
+    argocd-image-updater.argoproj.io/write-back-target: "000-kustomization"
 spec:
   project: default
   source:

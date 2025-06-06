@@ -18,12 +18,7 @@ images:
     newTag: v0.0.3
 
 resources:
-  # APM Applications
-  - apm/dotnet/k8s/deployment.yaml
-  - apm/dotnet/k8s/service.yaml
-  - apm/java/k8s/deployment.yaml
-  - apm/java/k8s/service.yaml
-  - apm/python/k8s/deployment.yaml
-  - apm/python/k8s/service.yaml
-  # Traefik Resources
-  - traefik-ingress.yaml
+  - 001-dotnet-todoapi.yaml
+  - 002-java-spring.yaml
+  - 003-python-flask.yaml
+  - 004-traefik-ingress.yaml
