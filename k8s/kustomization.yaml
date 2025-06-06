@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: apm-apps
+
+# Common labels for all resources
+commonLabels:
+  app.kubernetes.io/part-of: apm-apps
+  app.kubernetes.io/managed-by: argocd
+
+# Images to be used across all applications
+images:
+  - name: ambrosiaaaaa/apm-dotnet
+    newTag: v0.0.3
+  - name: ambrosiaaaaa/apm-java
+    newTag: v0.0.3
+  - name: ambrosiaaaaa/apm-python
+    newTag: v0.0.3
+
+resources:
+  # APM Applications
+  - apm/dotnet/k8s/deployment.yaml
+  - apm/dotnet/k8s/service.yaml
+  - apm/java/k8s/deployment.yaml
+  - apm/java/k8s/service.yaml
+  - apm/python/k8s/deployment.yaml
+  - apm/python/k8s/service.yaml
+  # Traefik Resources
+  - traefik-ingress.yaml

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-flask
+  namespace: apm-apps
+  labels:
+    tags.datadoghq.com/env: "apm-apps"
+    tags.datadoghq.com/service: "python-flask"
+    tags.datadoghq.com/version: "v1.0.0"
+spec:
+  selector:
+    matchLabels:
+      app: python-flask
+  template:
+    metadata:
+      labels:
+        app: python-flask
+        tags.datadoghq.com/env: "apm-apps"
+        tags.datadoghq.com/service: "python-flask"
+        tags.datadoghq.com/version: "v1.0.0"
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/python-lib.version: "v1.12.0"
+    spec:
+      containers:
+      - name: python-flask
+        image: ambrosiaaaaa/apm-python:v0.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+        env:
+          - name: DD_LOGS_INJECTION
+            value: "true"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi 
