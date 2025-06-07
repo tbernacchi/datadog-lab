@@ -2,14 +2,14 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: apm-apps
-  namespace: apm-apps
+  namespace: argocd
   annotations:
     argocd-image-updater.argoproj.io/git-branch: "main"
-    argocd-image-updater.argoproj.io/image-list: "ambrosiaaaaa/apm-dotnet,ambrosiaaaaa/apm-java,ambrosiaaaaa/apm-python"
+    argocd-image-updater.argoproj.io/image-list: "dotnet=ambrosiaaaaa/apm-dotnet,java=ambrosiaaaaa/apm-java,python=ambrosiaaaaa/apm-python"
     argocd-image-updater.argoproj.io/update-strategy: "semver"
     argocd-image-updater.argoproj.io/pull-secret: "dockerhub-secret"
-    argocd-image-updater.argoproj.io/write-back-method: "git:secret:apm-apps/git-creds"
-    argocd-image-updater.argoproj.io/write-back-target: "000-kustomization"
+    argocd-image-updater.argoproj.io/write-back-method: "git:secret:argocd/git-creds"
+    argocd-image-updater.argoproj.io/write-back-target: "kustomization"
 spec:
   project: default
   source:
@@ -23,43 +23,7 @@ spec:
     automated:
       prune: true
       selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: java-app
-  namespace: apm-apps
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/tbernacchi/datadog-lab.git
-    targetRevision: HEAD
-    path: apm/java/k8s
-    kustomize: {}
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: apm-apps
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: python-app
-  namespace: apm-apps
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/tbernacchi/datadog-lab.git
-    targetRevision: HEAD
-    path: apm/python/k8s
-    kustomize: {}
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: apm-apps
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true 
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+      - Validate=false 
