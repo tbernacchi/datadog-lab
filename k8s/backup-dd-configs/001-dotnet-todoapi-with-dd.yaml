@@ -1,41 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: java-spring
+  name: dotnet-todoapi
   namespace: apm-apps
 spec:
   selector:
     matchLabels:
-      app: java-spring
+      app: dotnet-todoapi
   template:
     metadata:
       labels:
-        app: java-spring
+        app: dotnet-todoapi
     spec:
       containers:
-      - name: java-spring
-        image: ambrosiaaaaa/apm-java:v0.0.3
+      - name: dotnet-todoapi
+        image: ambrosiaaaaa/apm-dotnet:v0.0.1
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - containerPort: 8081
         resources:
           requests:
             cpu: 200m
             memory: 64Mi
           limits:
             cpu: 300m
-            memory: 300Mi
+            memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: java-spring
+  name: dotnet-todoapi
   namespace: apm-apps
 spec:
   type: ClusterIP
   selector:
-    app: java-spring
+    app: dotnet-todoapi
   ports:
   - name: http
-    port: 8083
-    targetPort: 8080
+    port: 8081
+    targetPort: 80

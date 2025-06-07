@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: java-spring
-        image: ambrosiaaaaa/apm-java:v0.0.3
+        image: ambrosiaaaaa/apm-java:v0.0.1
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

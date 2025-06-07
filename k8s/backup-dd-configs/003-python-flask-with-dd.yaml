@@ -1,41 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: java-spring
+  name: python-flask
   namespace: apm-apps
 spec:
   selector:
     matchLabels:
-      app: java-spring
+      app: python-flask
   template:
     metadata:
       labels:
-        app: java-spring
+        app: python-flask
     spec:
       containers:
-      - name: java-spring
-        image: ambrosiaaaaa/apm-java:v0.0.3
+      - name: python-flask
+        image: ambrosiaaaaa/apm-python:v0.0.1
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - containerPort: 5000
         resources:
           requests:
             cpu: 200m
             memory: 64Mi
           limits:
             cpu: 300m
-            memory: 300Mi
+            memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: java-spring
+  name: python-flask
   namespace: apm-apps
 spec:
   type: ClusterIP
   selector:
-    app: java-spring
+    app: python-flask
   ports:
   - name: http
-    port: 8083
-    targetPort: 8080
+    port: 8082
+    targetPort: 5000
