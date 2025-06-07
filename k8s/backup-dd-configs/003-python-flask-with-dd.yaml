@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: python-flask
   namespace: apm-apps
+  labels:
+    tags.datadoghq.com/env: "apm-apps"
+    tags.datadoghq.com/service: "python-flask"
+    tags.datadoghq.com/version: "v1.0.0"
 spec:
   selector:
     matchLabels:
@@ -11,13 +15,22 @@ spec:
     metadata:
       labels:
         app: python-flask
+        tags.datadoghq.com/env: "apm-apps"    # env
+        tags.datadoghq.com/service: "python-flask"
+        tags.datadoghq.com/version: "v1.0.0"
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/python-lib.version: "v3.8.0" #From DD UI - APM.
     spec:
       containers:
       - name: python-flask
-        image: ambrosiaaaaa/apm-python:v0.0.1
+        image: ambrosiaaaaa/apm-python:v0.0.3
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        env:
+          - name: DD_LOGS_INJECTION
+            value: "true"
         resources:
           requests:
             cpu: 200m
