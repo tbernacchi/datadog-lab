@@ -199,6 +199,26 @@ apm
 
 4 directories, 0 files
 ```
+
+### Datadog Configuration Backups
+
+The Datadog configurations for all applications are backed up in the `k8s/backup-dd-configs/` directory. These backups include:
+
+- `001-dotnet-todoapi-with-dd.yaml`: .NET application Datadog configuration
+- `002-java-spring-with-dd.yaml`: Java application Datadog configuration
+- `003-python-flask-with-dd.yaml`: Python application Datadog configuration
+
+When you have an active Datadog license/trial:
+1. Copy the content of these files back to their original locations in `k8s/`
+2. Remove the `-with-dd` suffix from the filenames
+3. Apply the configurations using Argo CD or kubectl
+
+The backups include all necessary Datadog APM configurations, including:
+- Service tags and labels
+- APM library versions
+- Log injection settings
+- Admission controller configurations
+
 4. Instrument these applications to collect and correlate metrics, logs and traces.
 
 ```
