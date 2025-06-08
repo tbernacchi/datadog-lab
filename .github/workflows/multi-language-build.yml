@@ -18,9 +18,31 @@ env:
   REGISTRY: docker.io
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.filter.outputs.should_build }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check changed files
+        id: filter
+        run: |
+          # Get the list of changed files
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          
+          # Check if only kustomization.yaml was changed
+          if [[ $(echo "$CHANGED_FILES" | wc -l) -eq 1 ]] && [[ "$CHANGED_FILES" == *"kustomization.yaml"* ]]; then
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
   python-build:
     name: Build Python App
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    needs: check-changes
+    if: |
+      needs.check-changes.outputs.should_build == 'true' &&
+      contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: ubuntu-latest
 
     defaults:
@@ -75,7 +97,10 @@ jobs:
 
   java-build:
     name: Build Java App
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    needs: check-changes
+    if: |
+      needs.check-changes.outputs.should_build == 'true' &&
+      contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: ubuntu-latest
 
     defaults:
@@ -127,7 +152,10 @@ jobs:
 
   dotnet-build:
     name: Build .NET App
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    needs: check-changes
+    if: |
+      needs.check-changes.outputs.should_build == 'true' &&
+      contains(github.event.head_commit.message, '[skip ci]') == false
     runs-on: ubuntu-latest
 
     defaults:
