@@ -1,20 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: apm-apps
-
 commonLabels:
   app.kubernetes.io/part-of: apm-apps
   app.kubernetes.io/managed-by: argocd
-
 images:
   - name: ambrosiaaaaa/apm-dotnet
-    newTag: v0.0.1
+    newTag: v0.0.3
   - name: ambrosiaaaaa/apm-java
-    newTag: v0.0.1
+    newTag: v0.0.3
   - name: ambrosiaaaaa/apm-python
-    newTag: v0.0.1
-
+    newTag: v0.0.3
 resources:
   - 001-dotnet-todoapi.yaml
   - 002-java-spring.yaml
