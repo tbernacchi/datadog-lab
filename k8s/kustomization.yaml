@@ -6,11 +6,11 @@ commonLabels:
   app.kubernetes.io/managed-by: argocd
 images:
   - name: ambrosiaaaaa/apm-dotnet
-    newTag: v0.0.3
+    newTag: v0.0.1
   - name: ambrosiaaaaa/apm-java
     newTag: v0.0.3
   - name: ambrosiaaaaa/apm-python
-    newTag: v0.0.3
+    newTag: v0.0.1
 resources:
   - 001-dotnet-todoapi.yaml
   - 002-java-spring.yaml
