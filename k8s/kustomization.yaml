@@ -8,7 +8,7 @@ images:
   - name: ambrosiaaaaa/apm-dotnet
     newTag: v0.0.2
   - name: ambrosiaaaaa/apm-java
-    newTag: v0.0.1
+    newTag: v0.0.2
   - name: ambrosiaaaaa/apm-python
     newTag: v0.0.2
 resources:
