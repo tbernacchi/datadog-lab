@@ -6,7 +6,7 @@ commonLabels:
   app.kubernetes.io/managed-by: argocd
 images:
   - name: ambrosiaaaaa/apm-dotnet
-    newTag: v0.0.1
+    newTag: v0.0.2
   - name: ambrosiaaaaa/apm-java
     newTag: v0.0.2
   - name: ambrosiaaaaa/apm-python
